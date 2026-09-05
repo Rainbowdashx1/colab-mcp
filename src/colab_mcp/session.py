@@ -28,6 +28,7 @@ from mcp.client.session import ClientSession
 from mcp.types import TextContent
 import webbrowser
 
+from colab_mcp.static_tools import build_static_tools
 from colab_mcp.websocket_server import ColabWebSocketServer, COLAB, SCRATCH_PATH
 
 UI_CONNECTION_TIMEOUT = 60.0  # secs
@@ -184,6 +185,7 @@ class ColabSessionProxy:
         self.proxy_server: FastMCPProxy | None = None
         # list order matters, see: https://gofastmcp.com/servers/middleware#multiple-middleware
         self.middleware: list[Middleware] = []
+        self.static_tools: list[Tool] = []
         self.wss: ColabWebSocketServer | None = None
 
     async def start_proxy_server(self):
@@ -195,6 +197,11 @@ class ColabSessionProxy:
             client_factory=proxy_client.client_factory,
             instructions="Connects to a user's Google Colab session in a browser and allows for interactions with their Google Colab notebook",
         )
+        # Static passthrough tools are registered directly on the server
+        # (instead of mounting the proxy) so that clients without support for
+        # notifications/tools/list_changed, like Kimi CLI, see the full tool
+        # list from startup.
+        self.static_tools = build_static_tools(proxy_client)
         # ColabProxyMiddleware must be first because it sets the fe_connected state
         self.middleware.append(ColabProxyMiddleware(proxy_client))
         self.middleware.append(
