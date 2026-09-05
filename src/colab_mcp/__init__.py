@@ -71,7 +71,11 @@ async def main_async():
         logging.info("enabling session proxy tools")
         session_mcp = ColabSessionProxy()
         await session_mcp.start_proxy_server()
-        mcp.mount(session_mcp.proxy_server)
+        # kimi-support: register static passthrough tools instead of mounting
+        # the proxy, so no tools/list_changed handling is required from the
+        # client.
+        for tool in session_mcp.static_tools:
+            mcp.add_tool(tool)
         for middleware in session_mcp.middleware:
             mcp.add_middleware(middleware)
 

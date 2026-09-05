@@ -3,12 +3,37 @@
 An MCP server for bridging your local agent to a Colab session in the browser.
 
 # Supported Clients
-This MCP server requires client support for `notifications/tools/list_changed` and for the client to be running locally on your device. 
+This MCP server requires client support for `notifications/tools/list_changed` and for the client to be running locally on your device.
 
 Popular clients that fit these criteria include:
 - Gemini CLI
 - Claude Code
 - Windsurf
+
+## Kimi CLI (`kimi-support` branch)
+
+Kimi CLI does not act on `notifications/tools/list_changed`, so with the upstream
+design it never sees the Colab tools. The `kimi-support` branch fixes this by
+registering the Colab tools **statically at startup** as passthrough tools that
+forward calls to the live browser session (see `src/colab_mcp/static_tools.py`).
+Run the server from a local checkout of that branch:
+
+```
+...
+  "mcpServers": {
+    "colab-mcp": {
+      "command": "uv",
+      "args": ["run", "colab-mcp"],
+      "cwd": "/path/to/colab-mcp",
+      "startupTimeoutMs": 120000
+    }
+  }
+...
+```
+
+The static tool definitions were captured from the Colab frontend with
+`scripts/dump_tools.py` (see `colab_tools.json`). If Colab changes its tool
+surface, re-run that script and update `COLAB_TOOL_DEFINITIONS`.
 
 
 # Setup
